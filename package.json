@@ -28,7 +28,6 @@
     "@nestjs/platform-fastify": "^8.0.5",
     "@nestjs/schedule": "^1.0.1",
     "axios": "^0.21.1",
-    "discord-nestjs": "^1.1.12",
     "myzod": "^1.8.4",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
