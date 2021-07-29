@@ -1,7 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import type { AnyType, Infer } from "myzod";
+import axios from "axios";
 import myzod from "myzod";
-import type { AxiosResponse } from "axios";
+import type { AxiosResponse, AxiosRequestConfig } from "axios";
 import { ResponseInvalidException } from "./exceptions/response-invalid.exception";
 import { RequestFailedException } from "./exceptions/request-failed.exception";
 
@@ -12,33 +13,44 @@ export class AxiosUtilService {
   /**
    * Parse the response.
    *
-   * @param response The `axios` response.
+   * @param requester The requester that will returns an `axios` response.
    * @param schema The type schema
    * @exception RequestFailed, ResponseInvalid
    */
-  responseParser<T extends AnyType>(
-    response: AxiosResponse<unknown>,
+  async responseParser<T extends AnyType>(
+    requester: () => Promise<AxiosResponse<unknown>>,
     schema: T,
-  ): Infer<T> | never {
-    if (response.status >= 200 && response.status <= 299) {
-      this.logger.verbose("Checking response...");
-      const { data } = response;
-      const parsedData = schema.try(data);
+  ): Promise<Infer<T>> {
+    try {
+      const response = await requester();
 
-      if (parsedData instanceof myzod.ValidationError) {
-        this.logger.warn("The response is invalid.");
-        this.logger.warn(`Server response: ${JSON.stringify(data)}`);
-        this.logger.warn(`${parsedData.name}: ${parsedData.message}`);
-        throw new ResponseInvalidException(parsedData);
+      if (response.status >= 200 && response.status <= 299) {
+        this.logger.verbose("Checking response...");
+        const { data } = response;
+        const parsedData = schema.try(data);
+
+        if (parsedData instanceof myzod.ValidationError) {
+          this.logger.error("The response is invalid.");
+          this.logger.error(`Server response: ${JSON.stringify(data)}`);
+          this.logger.error(`${parsedData.name}: ${parsedData.message}`);
+          throw new ResponseInvalidException(parsedData);
+        }
+
+        this.logger.verbose("Returning the parsed data...");
+        return parsedData;
+      }
+    } catch (e: unknown) {
+      this.logger.error("Failed to request.");
+
+      if (axios.isAxiosError(e)) {
+        this.logger.error(e.toJSON());
+        throw new RequestFailedException(e.toJSON());
       }
 
-      this.logger.verbose("Returning the parsed data...");
-      return parsedData;
+      throw e; // ResponseInvalidException
     }
 
-    this.logger.warn("Failed to request.");
-    this.logger.warn(`HTTP code: ${response.status}`);
-    throw new RequestFailedException();
+    return Promise.reject();
   }
 
   /**
@@ -49,11 +61,13 @@ export class AxiosUtilService {
    */
   getAuthorizationHeader(
     bearerToken: string,
-    extra: Record<string, unknown> = {},
-  ): Record<string, unknown> {
+    extra: AxiosRequestConfig = {},
+  ): AxiosRequestConfig {
     return {
       ...extra,
-      Authorization: `Bearer ${bearerToken}`,
+      headers: {
+        Authorization: `Bearer ${bearerToken}`,
+      },
     };
   }
 }

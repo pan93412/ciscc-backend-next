@@ -32,7 +32,6 @@ export const StrapiMessagesResponseEntrySchema = myzod
   .object({
     id: myzod.number(),
     message: myzod.string(),
-    ip_address: myzod.string(),
     published: myzod.boolean(),
     approved: myzod.boolean(),
     created_at: myzod.date(),

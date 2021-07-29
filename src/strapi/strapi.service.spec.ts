@@ -1,18 +1,15 @@
 import type { TestingModule } from "@nestjs/testing";
 import { Test } from "@nestjs/testing";
+import { ConfigModule } from "@nestjs/config";
 import { AxiosUtilModule } from "../axios-util/axios-util.module";
 import { StrapiService } from "./strapi.service";
-
-process.env.STRAPI_PATH = "http://192.168.1.106:1337";
-process.env.STRAPI_ACCOUNT = "backend@example.com";
-process.env.STRAPI_PASSWORD = "backend";
 
 describe("StrapiService", () => {
   let service: StrapiService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [AxiosUtilModule],
+      imports: [ConfigModule.forRoot(), AxiosUtilModule],
       providers: [StrapiService],
     }).compile();
 
@@ -24,10 +21,21 @@ describe("StrapiService", () => {
   });
 
   describe("login()", () => {
-    it("should be available to backend", async () => {
+    it("should get the valid JWT", async () => {
       const login = await service.login();
 
+      console.log(login);
       expect(login).not.toBe("");
+    });
+  });
+
+  describe("sendMessage()", () => {
+    it("should returns 200", async () => {
+      const message = "Hello, World!";
+      const ip = "192.168.1.1";
+      const login = await service.sendMessage(message, ip);
+
+      expect(login.message).toBe(message);
     });
   });
 });

@@ -2,6 +2,7 @@ import type { TestingModule } from "@nestjs/testing";
 import { Test } from "@nestjs/testing";
 import myzod from "myzod";
 import type { AxiosResponse } from "axios";
+import axios from "axios";
 import { AxiosUtilService } from "./axios-util.service";
 import { RequestFailedException } from "./exceptions/request-failed.exception";
 import { ResponseInvalidException } from "./exceptions/response-invalid.exception";
@@ -23,47 +24,43 @@ describe("AxiosUtilService", () => {
 
   describe("responseParser", () => {
     const mockSchema = myzod.string();
-    const shouldThrowRequestFailed = {
-      data: "failed to request",
-      status: 404,
-      statusText: "",
-      headers: null,
-      config: null,
-      request: null,
-    } as AxiosResponse<unknown>;
-    const shouldThrowResponseInvalid = {
-      data: 123456,
-      status: 200,
-      statusText: "",
-      headers: null,
-      config: null,
-      request: null,
-    } as AxiosResponse<unknown>;
-    const shouldPass = {
-      data: "hi",
-      status: 200,
-      statusText: "",
-      headers: null,
-      config: null,
-      request: null,
-    } as AxiosResponse<unknown>;
+    const shouldThrowRequestFailed = async () =>
+      axios.get("https://this.domain.is.not.existed.tld");
+    const shouldThrowResponseInvalid = async () =>
+      ({
+        data: 123456,
+        status: 200,
+        statusText: "",
+        headers: null,
+        config: {},
+        request: null,
+      } as AxiosResponse<unknown>);
+    const shouldPass = async () =>
+      ({
+        data: "hi",
+        status: 200,
+        statusText: "",
+        headers: null,
+        config: {},
+        request: null,
+      } as AxiosResponse<unknown>);
 
-    it("throw RequestFailed if status is between 200~300", () => {
-      expect(() =>
+    it("throw RequestFailed if status is between 200~300", async () => {
+      await expect(() =>
         service.responseParser(shouldThrowRequestFailed, mockSchema),
-      ).toThrow(RequestFailedException);
+      ).rejects.toThrow(RequestFailedException);
     });
 
-    it("throw ResponseInvalidException if the response didn't match the schema", () => {
-      expect(() =>
+    it("throw ResponseInvalidException if the response didn't match the schema", async () => {
+      await expect(() =>
         service.responseParser(shouldThrowResponseInvalid, mockSchema),
-      ).toThrow(ResponseInvalidException);
+      ).rejects.toThrow(ResponseInvalidException);
     });
 
-    it("returns the response data if the response matches the schema & status is between 200~300", () => {
-      expect(service.responseParser(shouldPass, mockSchema)).toStrictEqual(
-        shouldPass.data,
-      );
+    it("returns the response data if the response matches the schema & status is between 200~300", async () => {
+      await expect(
+        service.responseParser(shouldPass, mockSchema),
+      ).resolves.toStrictEqual((await shouldPass()).data);
     });
   });
 
@@ -76,16 +73,20 @@ describe("AxiosUtilService", () => {
 
     it("pass a bearer token and the extra header, return the merged header", () => {
       expect(
-        service.getAuthorizationHeader("12345", { hi: "world" }),
+        service.getAuthorizationHeader("12345", {
+          data: "12345",
+        }),
       ).toStrictEqual({
         Authorization: "Bearer 12345",
-        hi: "world",
+        data: "12345",
       });
     });
 
     it("our Authorization is higher than extra headers", () => {
       expect(
-        service.getAuthorizationHeader("12345", { Authorization: "Hi" }),
+        service.getAuthorizationHeader("12345", {
+          headers: { Authorization: "Hi" },
+        }),
       ).toStrictEqual({
         Authorization: "Bearer 12345",
       });

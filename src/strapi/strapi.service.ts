@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import axios from "axios";
+import { Cron } from "@nestjs/schedule";
 import { AxiosUtilService } from "../axios-util/axios-util.service";
 import type {
   StrapiAuthRequest,
@@ -7,6 +8,7 @@ import type {
 } from "./strapi.interface";
 import {
   StrapiAuthResponseSchema,
+  StrapiMessagesResponseEntrySchema,
   StrapiMessagesResponseSchema,
 } from "./strapi.interface";
 
@@ -15,12 +17,6 @@ export class StrapiService {
   private readonly logger = new Logger(StrapiService.name);
 
   constructor(private axiosUtilService: AxiosUtilService) {}
-
-  /**
-   * The token of strapi.
-   * @private
-   */
-  private static strapiToken = "";
 
   /**
    * Get the API path with the specified method
@@ -41,24 +37,17 @@ export class StrapiService {
    * @returns JWT token for logging in
    */
   async login(): Promise<string | never> {
-    if (StrapiService.strapiToken.length) {
-      return StrapiService.strapiToken;
-    }
-
     this.logger.verbose("Logging in...");
-    const response = await axios.post<unknown>(this.getApi("/auth/local"), {
-      identifier: process.env.STRAPI_ACCOUNT,
-      password: process.env.STRAPI_PASSWORD,
-    } as StrapiAuthRequest);
-
-    this.logger.verbose("Trying to parse the /auth/local response...");
-    const typedResponse = this.axiosUtilService.responseParser(
-      response,
+    const response = await this.axiosUtilService.responseParser(
+      async () =>
+        axios.post<unknown>(this.getApi("/auth/local"), {
+          identifier: process.env.STRAPI_ACCOUNT,
+          password: process.env.STRAPI_PASSWORD,
+        } as StrapiAuthRequest),
       StrapiAuthResponseSchema,
     );
 
-    StrapiService.strapiToken = typedResponse.jwt;
-    return StrapiService.strapiToken;
+    return response.jwt;
   }
 
   /**
@@ -71,21 +60,39 @@ export class StrapiService {
     const token = strapiToken || (await this.login());
 
     this.logger.verbose("Sending message...");
-    const response = await axios.post<unknown>(
-      this.getApi("/messages"),
-      {
-        message,
-        ip_address: ip,
-      } as StrapiMessagesPostRequest,
-      this.axiosUtilService.getAuthorizationHeader(token),
+    const response = await this.axiosUtilService.responseParser(
+      async () =>
+        axios.post<unknown>(
+          this.getApi("/messages"),
+          {
+            message,
+            ip_address: ip,
+          } as StrapiMessagesPostRequest,
+          this.axiosUtilService.getAuthorizationHeader(token),
+        ),
+      StrapiMessagesResponseEntrySchema,
     );
 
-    this.logger.verbose("Trying to parse the /messages response...");
-    const typedResponse = this.axiosUtilService.responseParser(
-      response,
+    return response;
+  }
+
+  /**
+   * Publish the approved message in Strapi.
+   *
+   * It will be run every minutes.
+   */
+  @Cron("* */1 * * * *")
+  async publishApprovedMessage() {
+    const approvedButNotPublished = this.getApi(
+      "/messages?approved=true&published=false",
+    );
+
+    const response = await this.axiosUtilService.responseParser(
+      async () => axios.get(approvedButNotPublished),
       StrapiMessagesResponseSchema,
     );
 
-    return typedResponse;
+    console.log(response);
+    throw new Error("not implemented");
   }
 }

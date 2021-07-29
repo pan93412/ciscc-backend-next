@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { AxiosUtilService } from "../axios-util/axios-util.service";
+import { AxiosUtilModule } from "../axios-util/axios-util.module";
 import { StrapiService } from "./strapi.service";
 
 @Module({
-  imports: [AxiosUtilService],
+  imports: [AxiosUtilModule],
   providers: [StrapiService],
   exports: [StrapiService],
 })
