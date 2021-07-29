@@ -24,5 +24,27 @@ module.exports = {
     "import/prefer-default-export": "off",
     "class-methods-use-this": "off",
     "no-void": ["error", { allowAsStatement: true }],
+    "@typescript-eslint/consistent-type-imports": [
+      2,
+      {
+        prefer: "type-imports",
+      },
+    ],
+    "@typescript-eslint/restrict-template-expressions": 0,
+    "import/order": [
+      1,
+      {
+        groups: [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index",
+          "object",
+        ],
+      },
+    ],
+    "arrow-body-style": 2,
   },
 };
