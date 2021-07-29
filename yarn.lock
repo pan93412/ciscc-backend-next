@@ -4088,6 +4088,11 @@ mute-stream@0.0.8:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.8.tgz#1630c42b2251ff81e2a283de96a5497ea92e5e0d"
   integrity sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
 
+myzod@^1.8.4:
+  version "1.8.4"
+  resolved "https://registry.yarnpkg.com/myzod/-/myzod-1.8.4.tgz#7b8a824320b601c48c4f16647a71b90242cb1065"
+  integrity sha512-wLMGq0+sGf+c5L+Llifd6t214/0A6iqeoL3cThkoQdiBR4xnBUxsF0TQdQx35uUx14Y53hRWmq7uibs2XMXqhA==
+
 natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
