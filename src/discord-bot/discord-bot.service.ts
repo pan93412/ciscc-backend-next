@@ -27,7 +27,7 @@ export class DiscordBotService {
 
   @OnEvent("messageReactionAdd")
   async recycleMessage(reaction: MessageReaction): Promise<void> {
-    this.logger.verbose("recycleMessage: begin!");
+    this.logger.debug("recycleMessage: begin!");
     const me = this.client.user;
 
     if (
@@ -41,15 +41,15 @@ export class DiscordBotService {
       await reaction.message.delete();
     }
 
-    this.logger.verbose("recycleMessage: done!");
+    this.logger.debug("recycleMessage: done!");
   }
 
   @OnCommand("請列出群組資訊") // CISCC 請列出群組資訊
   async getChannelInfo(message: Message): Promise<void> {
-    this.logger.verbose("getChannelInfo: begin!");
+    this.logger.debug("getChannelInfo: begin!");
     const sentMsg = await message.reply(JSON.stringify(message.channel));
     await sentMsg.react(TRASH_BIN_EMOJI);
-    this.logger.verbose("getChannelInfo: done!");
+    this.logger.debug("getChannelInfo: done!");
   }
 
   private registerEvent(event: string, func: (...args: any[]) => void) {
@@ -95,7 +95,7 @@ export class DiscordBotService {
         return;
       }
 
-      this.logger.warn(`${methodName} matches none. Ignoring.`);
+      this.logger.debug(`${methodName} matches none. Ignoring.`);
     });
   }
 }
