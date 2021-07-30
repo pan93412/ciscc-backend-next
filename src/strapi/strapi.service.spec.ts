@@ -29,13 +29,53 @@ describe("StrapiService", () => {
     });
   });
 
-  describe("sendMessage()", () => {
-    it("should returns 200", async () => {
+  describe("sendMessage() & deleteMessage()", () => {
+    let messageId = -1;
+
+    it("sendMessage() should create a message", async () => {
       const message = "Hello, World!";
       const ip = "192.168.1.1";
-      const login = await service.sendMessage(message, ip);
+      const sentMsg = await service.sendMessage(message, ip);
 
-      expect(login.message).toBe(message);
+      expect(sentMsg.message).toBe(message);
+      messageId = sentMsg.id;
+    });
+
+    it("deleteMessage() should delete message if the id is correct", async () => {
+      await expect(service.deleteMessage(messageId)).resolves.toBeDefined();
+    });
+
+    it("deleteMessage() should throw error if the id is incorrect", async () => {
+      await expect(service.deleteMessage(messageId)).rejects;
+    });
+  });
+
+  describe("updateMessage() and its dependencies", () => {
+    let messageId = -1;
+
+    it("sendMessage() should create a message", async () => {
+      const message = "Hello, World!";
+      const ip = "192.168.1.1";
+      const sentMsg = await service.sendMessage(message, ip);
+
+      expect(sentMsg.message).toBe(message);
+      messageId = sentMsg.id;
+    });
+
+    it("updateMessage() should patch the message with the specified one", async () => {
+      const newMessage = "aaa";
+
+      await expect(
+        service
+          .updateMessage(messageId, {
+            message: newMessage,
+          })
+          .then((m) => m.message),
+      ).resolves.toBe(newMessage);
+    });
+
+    it("deleteMessage() should delete message if the id is correct", async () => {
+      await expect(service.deleteMessage(messageId)).resolves.toBeDefined();
     });
   });
 });

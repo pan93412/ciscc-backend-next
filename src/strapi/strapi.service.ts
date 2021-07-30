@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import axios from "axios";
-import { Cron } from "@nestjs/schedule";
+import type { Infer } from "myzod";
 import { AxiosUtilService } from "../axios-util/axios-util.service";
 import type {
   StrapiAuthRequest,
@@ -60,7 +60,7 @@ export class StrapiService {
     const token = strapiToken || (await this.login());
 
     this.logger.verbose("Sending message...");
-    const response = await this.axiosUtilService.responseParser(
+    return this.axiosUtilService.responseParser(
       async () =>
         axios.post<unknown>(
           this.getApi("/messages"),
@@ -72,27 +72,101 @@ export class StrapiService {
         ),
       StrapiMessagesResponseEntrySchema,
     );
-
-    return response;
   }
 
   /**
-   * Publish the approved message in Strapi.
-   *
-   * It will be run every minutes.
+   * Get the approved but not published message in Strapi.
    */
-  @Cron("* */1 * * * *")
-  async publishApprovedMessage() {
+  async getApprovedUnpublishedMessage() {
+    this.logger.verbose("Getting the approved but unpublished messages...");
     const approvedButNotPublished = this.getApi(
       "/messages?approved=true&published=false",
     );
 
-    const response = await this.axiosUtilService.responseParser(
+    return this.axiosUtilService.responseParser(
       async () => axios.get(approvedButNotPublished),
       StrapiMessagesResponseSchema,
     );
+  }
 
-    console.log(response);
-    throw new Error("not implemented");
+  /**
+   * Update (PUT) the message.
+   *
+   * @param messageId The message ID
+   * @param patch The object to be updated to.
+   * @param strapiToken Explicitly specify the Strapi token.
+   */
+  async updateMessage(
+    messageId: number,
+    patch: Partial<Infer<typeof StrapiMessagesResponseEntrySchema>>,
+    strapiToken?: string,
+  ) {
+    this.logger.verbose("Updating message...");
+    this.logger.verbose(patch);
+
+    const token = strapiToken || (await this.login());
+    const specifiedMessage = this.getApi(`/messages/${messageId}`);
+
+    return this.axiosUtilService.responseParser(
+      async () =>
+        axios.put(
+          specifiedMessage,
+          patch,
+          this.axiosUtilService.getAuthorizationHeader(token),
+        ),
+      StrapiMessagesResponseEntrySchema,
+    );
+  }
+
+  /**
+   * Delete the message.
+   *
+   * @param messageId The message ID
+   * @param strapiToken Explicitly specify the Strapi token.
+   */
+  async deleteMessage(messageId: number, strapiToken?: string) {
+    this.logger.verbose("Deleting message...");
+
+    const token = strapiToken || (await this.login());
+    const specifiedMessage = this.getApi(`/messages/${messageId}`);
+
+    return this.axiosUtilService.responseParser(
+      async () =>
+        axios.delete(
+          specifiedMessage,
+          this.axiosUtilService.getAuthorizationHeader(token),
+        ),
+      StrapiMessagesResponseEntrySchema,
+    );
+  }
+
+  /**
+   * Set the message as approved.
+   *
+   * @see updateMessage
+   */
+  async setApproved(messageId: number, strapiToken?: string) {
+    return this.updateMessage(
+      messageId,
+      {
+        approved: true,
+      },
+      strapiToken,
+    );
+  }
+
+  /**
+   * Set the message as published.
+   *
+   * @see updateMessage
+   */
+  async setPublished(messageId: number, strapiToken?: string) {
+    return this.updateMessage(
+      messageId,
+      {
+        published: true,
+      },
+      strapiToken,
+    );
   }
 }
