@@ -170,16 +170,18 @@ export class DiscordBotService {
   }
 
   /**
-   * Send the message to the text channel specified in the configuration.
+   * Send the message to the text channel
    * @param message The message.
+   * @param channel The channel the message should send to.
+   * If not specified, it uses the configuration value.
    */
-  async sendMessage(message: string): Promise<Message> {
+  async sendMessage(message: string, channel?: TextChannel): Promise<Message> {
     this.logger.debug("sendMessage: begin!");
-    const channel = await this.getTextChannel();
-    if (!channel) throw new InvalidChannelException();
+    const theChannel = channel || (await this.getTextChannel());
+    if (!theChannel) throw new InvalidChannelException();
 
     this.logger.debug("sendMessage: end!");
-    return channel.send(message);
+    return theChannel.send(message);
   }
 
   /**
@@ -187,15 +189,17 @@ export class DiscordBotService {
    *
    * The service message can be automatically removed after clicking TRASH_BIN_EMOJI.
    *
-   * @param message The message without the SERVICE_MESSAGE_PREFIX.
+   * @see sendMessage
    */
-  async sendServiceMessage(message: string): Promise<Message> {
+  async sendServiceMessage(
+    message: string,
+    channel?: TextChannel,
+  ): Promise<Message> {
     this.logger.debug("sendServiceMessage: begin!");
-    const channel = await this.getTextChannel();
-    if (!channel) throw new InvalidChannelException();
 
-    const sentMessage = await channel.send(
+    const sentMessage = await this.sendMessage(
       `${SERVICE_MESSAGE_PREFIX}${message}`,
+      channel,
     );
     await sentMessage.react(TRASH_BIN_EMOJI);
 
@@ -247,6 +251,7 @@ export class DiscordBotService {
   @OnCommand("請列出群組資訊")
   async getChannelInfo(message: Message): Promise<void> {
     this.logger.debug("getChannelInfo: begin!");
+    await this.sendMessage(JSON.stringify(message.channel));
     const sentMsg = await message.reply(JSON.stringify(message.channel));
     await sentMsg.react(TRASH_BIN_EMOJI);
     this.logger.debug("getChannelInfo: done!");
