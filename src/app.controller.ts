@@ -1,12 +1,19 @@
-import { Body, Controller, Ip, Post } from "@nestjs/common";
+import { Body, Controller, Ip, Logger, Post } from "@nestjs/common";
 import { StrapiService } from "./strapi/strapi.service";
+import { AppService } from "./app.service";
+import { SendMessageRequest } from "./app.interface";
 
 @Controller()
 export class AppController {
-  constructor(private strapiService: StrapiService) {}
+  private readonly logger = new Logger();
 
-  @Post()
-  async sendMessage(@Body("message") message: string, @Ip() ip: string) {
-    return this.strapiService.sendMessage(message, ip);
+  constructor(
+    private appService: AppService,
+    private strapiService: StrapiService,
+  ) {}
+
+  @Post("/message")
+  async sendMessage(@Body() body: SendMessageRequest, @Ip() ip: string) {
+    return this.strapiService.sendMessage(body.message, ip);
   }
 }
