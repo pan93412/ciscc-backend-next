@@ -13,7 +13,7 @@ export class AppService {
     private readonly discordService: DiscordBotService,
   ) {}
 
-  @Cron("* */1 * * * *")
+  @Cron("0 */1 * * * *")
   async syncApprovedMessages() {
     this.logger.log("Start syncing approved messages...");
 
