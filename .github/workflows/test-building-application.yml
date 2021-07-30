@@ -23,12 +23,12 @@ jobs:
           node-version: '14'
           cache: 'yarn'
 
-      - name: Cache .next/cache
+      - name: Cache dist
         uses: actions/cache@v2
         env:
-          cache-name: cache-next-cache
+          cache-name: cache-dist
         with:
-          path: ./.next/cache/
+          path: ./dist
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
