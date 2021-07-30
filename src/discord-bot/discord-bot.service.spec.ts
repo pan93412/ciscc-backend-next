@@ -3,6 +3,7 @@ import { Test } from "@nestjs/testing";
 import { ConfigModule } from "@nestjs/config";
 import type { Channel } from "discord.js";
 import { DiscordBotService } from "./discord-bot.service";
+import { SERVICE_MESSAGE_PREFIX, TRASH_BIN_EMOJI } from "./utility/consts";
 
 describe("DiscordBotService", () => {
   let service: DiscordBotService;
@@ -61,6 +62,24 @@ describe("DiscordBotService", () => {
       await expect(
         service.sendMessage(text).then((m) => m.content),
       ).resolves.toBe(text);
+    });
+  });
+
+  describe("sendServiceMessage()", () => {
+    jest.setTimeout(15000); // since it make 2 requests
+
+    it("can send the service message", async () => {
+      const text = "這是個服務訊息，請檢查是否有垃圾桶按鈕。";
+      await service.login();
+      await expect(
+        service
+          .sendServiceMessage(text)
+          .then(
+            (m) =>
+              m.reactions.resolve(TRASH_BIN_EMOJI)?.count &&
+              m.content === `${SERVICE_MESSAGE_PREFIX}${text}`,
+          ),
+      ).resolves.toBeTruthy();
     });
   });
 });
