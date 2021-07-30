@@ -1,10 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
 import type { Channel, TextChannel, ClientEvents } from "discord.js";
 import { Message, Client, MessageReaction } from "discord.js";
+import { StrapiService } from "../strapi/strapi.service";
 import { OnCommand, OnEvent } from "./utility/metadata-decorator";
 import { MetadataKeys } from "./utility/metadata-keys";
 import {
+  APPROVE_COMMAND_MESSAGE_MATCHER,
   DISCORD_COMMAND_PREFIX,
+  REJECT_COMMAND_MESSAGE_MATCHER,
   SERVICE_MESSAGE_MATCHER,
   SERVICE_MESSAGE_PREFIX,
   TRASH_BIN_EMOJI,
@@ -18,6 +21,8 @@ export class DiscordBotService {
   private static messageChannel: Channel | null = null;
 
   private readonly logger = new Logger(DiscordBotService.name);
+
+  constructor(private readonly strapiService: StrapiService) {}
 
   /**
    * Log in the Discord Bot
@@ -257,5 +262,80 @@ export class DiscordBotService {
         message.channel,
       );
     this.logger.debug("getChannelInfo: done!");
+  }
+
+  /**
+   * It will be triggered after someone said "CISCC 我核可 #{ID}"。
+   *
+   * The `{ID}` can be any valid numeric value.
+   *
+   * @see APPROVE_COMMAND_MESSAGE_MATCHER
+   */
+  @OnEvent("message")
+  async approveMessage(message: Message): Promise<void> {
+    if (
+      !message.content.startsWith(DISCORD_COMMAND_PREFIX) ||
+      !this.isTextChannel(message.channel)
+    )
+      return;
+    this.logger.debug(`approveMessage: triggered by ${message.author.id}`);
+
+    const commandMatch = message.content.match(APPROVE_COMMAND_MESSAGE_MATCHER);
+    if (commandMatch && commandMatch[1]) {
+      try {
+        const postId = Number(commandMatch[1]);
+        await this.strapiService.setApproved(postId, true);
+        await message.reply(`那我就幫你送出 #${postId} 囉！ #APPROVED #CISCC`);
+      } catch (e: unknown) {
+        await this.sendServiceMessage(
+          "很遺憾，無法完成您的請求。<@557530951824048140> 出來處理。",
+          message.channel,
+        );
+        this.logger.error(e);
+      }
+    }
+
+    this.logger.debug(`approveMessage: done!`);
+  }
+
+  /**
+   * It will be triggered after someone said "CISCC 我拒絕 #{ID}"。
+   *
+   * The `{ID}` can be any valid numeric value.
+   *
+   * @see REJECT_COMMAND_MESSAGE_MATCHER
+   */
+  @OnEvent("message")
+  async rejectMessage(message: Message): Promise<void> {
+    if (
+      !message.content.startsWith(DISCORD_COMMAND_PREFIX) ||
+      !this.isTextChannel(message.channel)
+    )
+      return;
+    this.logger.debug(`rejectMessage: triggered by ${message.author.id}`);
+
+    const commandMatch = message.content.match(REJECT_COMMAND_MESSAGE_MATCHER);
+    if (commandMatch && commandMatch[1]) {
+      try {
+        const postId = Number(commandMatch[1]);
+        const isMessageApprovedButUnpublished =
+          await this.strapiService.isMessageApprovedButUnpublished(postId);
+
+        if (isMessageApprovedButUnpublished) {
+          await this.strapiService.setApproved(postId, false);
+          await message.reply(`我會拒絕發布這則訊息。#REJECTED #CISCC`);
+        } else {
+          await this.sendServiceMessage("這則訊息不在待發布佇列中。");
+        }
+      } catch (e: unknown) {
+        await this.sendServiceMessage(
+          "很遺憾，無法完成您的請求。<@557530951824048140> 出來處理。",
+          message.channel,
+        );
+        this.logger.error(e);
+      }
+    }
+
+    this.logger.debug(`rejectMessage: done!`);
   }
 }
