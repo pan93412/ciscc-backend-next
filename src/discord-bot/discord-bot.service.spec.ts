@@ -22,11 +22,10 @@ describe("DiscordBotService", () => {
   });
 
   describe("getMessageChannel())", () => {
-    jest.setTimeout(15000); // since it make 2 requests
     it("should not be null", async () => {
       await service.login();
       await expect(service.getMessageChannel()).resolves.not.toBe(null);
-    });
+    }, 15000);
   });
 
   describe("isTextChannel()", () => {
@@ -47,27 +46,23 @@ describe("DiscordBotService", () => {
   });
 
   describe("getTextChannel", () => {
-    jest.setTimeout(15000); // since it make 2 requests
     it("should not be null", async () => {
       await service.login();
       await expect(service.getTextChannel()).resolves.not.toBe(null);
-    });
+    }, 15000);
   });
 
   describe("sendMessage()", () => {
-    jest.setTimeout(15000); // since it make 2 requests
     it("can send message", async () => {
       const text = "Hello, World!";
       await service.login();
       await expect(
         service.sendMessage(text).then((m) => m.content),
       ).resolves.toBe(text);
-    });
+    }, 15000);
   });
 
   describe("sendServiceMessage()", () => {
-    jest.setTimeout(15000); // since it make 2 requests
-
     it("can send the service message", async () => {
       const text = "這是個服務訊息，請檢查是否有垃圾桶按鈕。";
       await service.login();
@@ -80,6 +75,6 @@ describe("DiscordBotService", () => {
               m.content === `${SERVICE_MESSAGE_PREFIX}${text}`,
           ),
       ).resolves.toBeTruthy();
-    });
+    }, 15000);
   });
 });
