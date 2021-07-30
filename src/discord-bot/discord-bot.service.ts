@@ -3,7 +3,12 @@ import type { Channel, TextChannel } from "discord.js";
 import { Message, Client, MessageReaction } from "discord.js";
 import { OnCommand, OnEvent } from "./utility/metadata-decorator";
 import { MetadataKeys } from "./utility/metadata-keys";
-import { DISCORD_COMMAND_PREFIX, TRASH_BIN_EMOJI } from "./utility/consts";
+import {
+  DISCORD_COMMAND_PREFIX,
+  SERVICE_MESSAGE_MATCHER,
+  SERVICE_MESSAGE_PREFIX,
+  TRASH_BIN_EMOJI,
+} from "./utility/consts";
 import { InvalidChannelException } from "./exceptions/invalid-channel.exception";
 
 @Injectable()
@@ -43,11 +48,19 @@ export class DiscordBotService {
     const me = this.client.user;
 
     if (
+      // Is this.client.user !== null
       me &&
+      // Is reaction.count !== null
       reaction.count &&
-      reaction.count >= 2 &&
+      // The reaction is a trash bin
       reaction.emoji.name === TRASH_BIN_EMOJI &&
-      reaction.message.author.equals(me)
+      // More than 2 of people have given the same reaction
+      reaction.count >= 2 &&
+      // The message of the reacted message is from this bot
+      reaction.message.author.equals(me) &&
+      // Is the message the service message?
+      // (Prevent the normal message to be maliciously removed)
+      reaction.message.content.match(SERVICE_MESSAGE_MATCHER)
     ) {
       this.logger.verbose(`recycleMessage: removing: ${reaction.message.id}`);
       await reaction.message.delete();
@@ -103,7 +116,22 @@ export class DiscordBotService {
     const channel = await this.getTextChannel();
     if (!channel) throw new InvalidChannelException();
 
+    this.logger.debug("sendMessage: end!");
     return channel.send(message);
+  }
+
+  async sendServiceMessage(message: string): Promise<Message> {
+    this.logger.debug("sendServiceMessage: begin!");
+    const channel = await this.getTextChannel();
+    if (!channel) throw new InvalidChannelException();
+
+    const sentMessage = await channel.send(
+      `${SERVICE_MESSAGE_PREFIX}${message}`,
+    );
+    await sentMessage.react(TRASH_BIN_EMOJI);
+
+    this.logger.debug("sendServiceMessage: end!");
+    return sentMessage;
   }
 
   private registerEvent(event: string, func: (...args: any[]) => void) {
