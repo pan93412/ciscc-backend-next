@@ -9,4 +9,4 @@ RUN yarn;
 
 # Run it
 EXPOSE 3000
-ENTRYPOINT ["yarn", "start"]
+CMD ["yarn", "start"]
