@@ -77,7 +77,7 @@ describe("StrapiService", () => {
     });
   });
 
-  describe("setApproved() and its dependencies", () => {
+  describe("setApproved(), isMessageApprovedButUnpublished() and its dependencies", () => {
     let messageId = -1;
 
     it("sendMessage() should create a message", async () => {
@@ -93,6 +93,24 @@ describe("StrapiService", () => {
       await expect(
         service.setApproved(messageId).then((m) => m.approved),
       ).resolves.toBe(true);
+    });
+
+    it('isMessageApprovedButUnpublished() should indicate the approved message "true"', async () => {
+      await expect(
+        service.isMessageApprovedButUnpublished(messageId),
+      ).resolves.toBe(true);
+    });
+
+    it("setApproved() with truthy=false should make the specified message not approved", async () => {
+      await expect(
+        service.setApproved(messageId, false).then((m) => m.approved),
+      ).resolves.toBe(false);
+    });
+
+    it('isMessageApprovedButUnpublished() should indicate the non-approved message "false"', async () => {
+      await expect(
+        service.isMessageApprovedButUnpublished(messageId),
+      ).resolves.toBe(false);
     });
 
     it("deleteMessage() should delete message if the id is correct", async () => {

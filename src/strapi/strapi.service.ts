@@ -90,6 +90,24 @@ export class StrapiService {
   }
 
   /**
+   * Is the specified message approved but unpublished?
+   *
+   * @param messageId the message id
+   */
+  async isMessageApprovedButUnpublished(messageId: number): Promise<boolean> {
+    this.logger.verbose("Checking if the message approved but unpublished...");
+    const approvedButNotPublished = this.getApi(
+      `/messages?approved=true&published=false&id=${messageId}`,
+    );
+    const response = await this.axiosUtilService.responseParser(
+      async () => axios.get(approvedButNotPublished),
+      StrapiMessagesResponseSchema,
+    );
+
+    return response.length > 0;
+  }
+
+  /**
    * Update (PUT) the message.
    *
    * @param messageId The message ID
@@ -143,13 +161,14 @@ export class StrapiService {
   /**
    * Set the message as approved.
    *
+   * @param truthy Should approve it? Default = true.
    * @see updateMessage
    */
-  async setApproved(messageId: number, strapiToken?: string) {
+  async setApproved(messageId: number, truthy = true, strapiToken?: string) {
     return this.updateMessage(
       messageId,
       {
-        approved: true,
+        approved: truthy,
       },
       strapiToken,
     );
