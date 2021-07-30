@@ -23,8 +23,6 @@ describe("StrapiService", () => {
   describe("login()", () => {
     it("should get the valid JWT", async () => {
       const login = await service.login();
-
-      console.log(login);
       expect(login).not.toBe("");
     });
   });
@@ -72,6 +70,52 @@ describe("StrapiService", () => {
           })
           .then((m) => m.message),
       ).resolves.toBe(newMessage);
+    });
+
+    it("deleteMessage() should delete message if the id is correct", async () => {
+      await expect(service.deleteMessage(messageId)).resolves.toBeDefined();
+    });
+  });
+
+  describe("setApproved() and its dependencies", () => {
+    let messageId = -1;
+
+    it("sendMessage() should create a message", async () => {
+      const message = "Hello, World!";
+      const ip = "192.168.1.1";
+      const sentMsg = await service.sendMessage(message, ip);
+
+      expect(sentMsg.message).toBe(message);
+      messageId = sentMsg.id;
+    });
+
+    it("setApproved() should make the specified message approved", async () => {
+      await expect(
+        service.setApproved(messageId).then((m) => m.approved),
+      ).resolves.toBe(true);
+    });
+
+    it("deleteMessage() should delete message if the id is correct", async () => {
+      await expect(service.deleteMessage(messageId)).resolves.toBeDefined();
+    });
+  });
+
+  describe("setSubmitted() and its dependencies", () => {
+    let messageId = -1;
+
+    it("sendMessage() should create a message", async () => {
+      const message = "Hello, World!";
+      const ip = "192.168.1.1";
+      const sentMsg = await service.sendMessage(message, ip);
+
+      expect(sentMsg.message).toBe(message);
+      messageId = sentMsg.id;
+    });
+
+    it("setPublished() should make the status of the specified message published", async () => {
+      await expect(
+        service.setPublished(messageId).then((m) => m.published),
+      ).resolves.toBe(true);
     });
 
     it("deleteMessage() should delete message if the id is correct", async () => {
