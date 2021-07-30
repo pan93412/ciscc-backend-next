@@ -251,9 +251,11 @@ export class DiscordBotService {
   @OnCommand("請列出群組資訊")
   async getChannelInfo(message: Message): Promise<void> {
     this.logger.debug("getChannelInfo: begin!");
-    await this.sendMessage(JSON.stringify(message.channel));
-    const sentMsg = await message.reply(JSON.stringify(message.channel));
-    await sentMsg.react(TRASH_BIN_EMOJI);
+    if (this.isTextChannel(message.channel))
+      await this.sendServiceMessage(
+        JSON.stringify(message.channel),
+        message.channel,
+      );
     this.logger.debug("getChannelInfo: done!");
   }
 }
