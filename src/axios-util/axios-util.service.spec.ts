@@ -67,7 +67,9 @@ describe("AxiosUtilService", () => {
   describe("getAuthorizationHeader", () => {
     it("pass a bearer token, return the header", () => {
       expect(service.getAuthorizationHeader("12345")).toStrictEqual({
-        Authorization: "Bearer 12345",
+        headers: {
+          Authorization: "Bearer 12345",
+        },
       });
     });
 
@@ -77,7 +79,9 @@ describe("AxiosUtilService", () => {
           data: "12345",
         }),
       ).toStrictEqual({
-        Authorization: "Bearer 12345",
+        headers: {
+          Authorization: "Bearer 12345",
+        },
         data: "12345",
       });
     });
@@ -88,7 +92,9 @@ describe("AxiosUtilService", () => {
           headers: { Authorization: "Hi" },
         }),
       ).toStrictEqual({
-        Authorization: "Bearer 12345",
+        headers: {
+          Authorization: "Bearer 12345",
+        },
       });
     });
   });
