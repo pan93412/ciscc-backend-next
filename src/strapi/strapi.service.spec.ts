@@ -2,6 +2,7 @@ import type { TestingModule } from "@nestjs/testing";
 import { Test } from "@nestjs/testing";
 import { ConfigModule } from "@nestjs/config";
 import { AxiosUtilModule } from "../axios-util/axios-util.module";
+import type { Depromise } from "../common/type-utils";
 import { StrapiService } from "./strapi.service";
 
 describe("StrapiService", () => {
@@ -45,6 +46,51 @@ describe("StrapiService", () => {
 
     it("deleteMessage() should throw error if the id is incorrect", async () => {
       await expect(service.deleteMessage(messageId)).rejects;
+    });
+  });
+
+  describe("getMessage[s]() & its dependencies", () => {
+    let message: Depromise<ReturnType<typeof service.sendMessage>> | null =
+      null;
+
+    it("sendMessage() should create a message", async () => {
+      const messageText = "Hello, World!";
+      const ip = "192.168.1.1";
+      const sentMsg = await service.sendMessage(messageText, ip);
+
+      expect(sentMsg.message).toBe(messageText);
+      message = sentMsg;
+    });
+
+    it("getMessages() should include the sent message", async () => {
+      await expect(
+        service.getMessages({ id: message?.id }).then((v) => v.length),
+      ).resolves.toBe(1);
+    });
+
+    it("getMessages() should return an empty array if this message does not exist", async () => {
+      await expect(
+        service.getMessages({ id: -1 }).then((v) => v.length),
+      ).resolves.toBe(0);
+    });
+
+    it("getMessage() should return the sent message", async () => {
+      if (!message) throw new Error("assert: message != null");
+
+      await expect(service.getMessage(message?.id)).resolves.toStrictEqual(
+        message,
+      );
+    });
+
+    it("getMessage() should return null if this message does not exist", async () => {
+      if (!message) throw new Error("assert: message != null");
+
+      await expect(service.getMessage(-1)).resolves.toBe(null);
+    });
+
+    it("deleteMessage() should delete message if the id is correct", async () => {
+      if (!message) throw new Error("assert: message != null");
+      await expect(service.deleteMessage(message.id)).resolves.toBeDefined();
     });
   });
 

@@ -1,3 +1,4 @@
+import { URLSearchParams } from "url";
 import { Injectable, Logger } from "@nestjs/common";
 import axios from "axios";
 import type { Infer } from "myzod";
@@ -24,11 +25,38 @@ export class StrapiService {
    * @param method The method to call
    * @returns The API path that can be used on Axios.
    */
-  private getApi(method: string): string {
+  private static getApi(method: string): string {
     if (!process.env.STRAPI_PATH || process.env.STRAPI_PATH === "")
       throw new Error("You should specify 'STRAPI_PATH' environment variable.");
 
     return `${process.env.STRAPI_PATH}${method}`;
+  }
+
+  private static constructConditionQueryString(
+    condition: Record<string, unknown>,
+  ): string {
+    // FIXME: currently O(n), need optimization.
+    const searchParam = new URLSearchParams();
+
+    // type-safe way to construct the search parameters
+    Object.entries(condition).forEach(([key, value]) => {
+      switch (typeof value) {
+        case "string":
+          searchParam.set(key, value);
+          break;
+        case "bigint":
+        case "number":
+        case "boolean":
+          searchParam.set(key, value.toString());
+          break;
+        case "object":
+          searchParam.set(key, JSON.stringify(value));
+          break;
+        default:
+      }
+    });
+
+    return searchParam.toString();
   }
 
   /**
@@ -40,7 +68,7 @@ export class StrapiService {
     this.logger.verbose("Logging in...");
     const response = await this.axiosUtilService.responseParser(
       async () =>
-        axios.post<unknown>(this.getApi("/auth/local"), {
+        axios.post<unknown>(StrapiService.getApi("/auth/local"), {
           identifier: process.env.STRAPI_ACCOUNT,
           password: process.env.STRAPI_PASSWORD,
         } as StrapiAuthRequest),
@@ -63,7 +91,7 @@ export class StrapiService {
     return this.axiosUtilService.responseParser(
       async () =>
         axios.post<unknown>(
-          this.getApi("/messages"),
+          StrapiService.getApi("/messages"),
           {
             message,
             ip_address: ip,
@@ -75,18 +103,55 @@ export class StrapiService {
   }
 
   /**
-   * Get the approved but not published message in Strapi.
+   * Get the messages matching the condition.
+   *
+   * @param condition The condition.
+   * @return The messages matching the condition.
+   * If <condition> was not specified, get all messages.
    */
-  async getApprovedUnpublishedMessage() {
-    this.logger.verbose("Getting the approved but unpublished messages...");
-    const approvedButNotPublished = this.getApi(
-      "/messages?approved=true&published=false",
-    );
+  async getMessages(
+    condition?: Partial<Infer<typeof StrapiMessagesResponseEntrySchema>>,
+  ) {
+    this.logger.verbose("Getting the messages matching the condition...");
+    let url = StrapiService.getApi("/messages");
+    if (condition)
+      url += `?${StrapiService.constructConditionQueryString(condition)}`;
 
     return this.axiosUtilService.responseParser(
-      async () => axios.get(approvedButNotPublished),
+      async () => axios.get(url),
       StrapiMessagesResponseSchema,
     );
+  }
+
+  /**
+   * Get the specified message.
+   *
+   * @param messageId The message id.
+   * @return The message.
+   */
+  async getMessage(messageId: number) {
+    this.logger.verbose("Getting the specified message...");
+    const url = StrapiService.getApi(`/messages/${messageId}`);
+
+    try {
+      return await this.axiosUtilService.responseParser(
+        async () => axios.get(url),
+        StrapiMessagesResponseEntrySchema,
+      );
+    } catch (e) {
+      this.logger.warn(e);
+      return null;
+    }
+  }
+
+  /**
+   * Get the approved but not published messages in Strapi.
+   */
+  async getApprovedUnpublishedMessages() {
+    return this.getMessages({
+      approved: true,
+      published: false,
+    });
   }
 
   /**
@@ -95,16 +160,13 @@ export class StrapiService {
    * @param messageId the message id
    */
   async isMessageApprovedButUnpublished(messageId: number): Promise<boolean> {
-    this.logger.verbose("Checking if the message approved but unpublished...");
-    const approvedButNotPublished = this.getApi(
-      `/messages?approved=true&published=false&id=${messageId}`,
-    );
-    const response = await this.axiosUtilService.responseParser(
-      async () => axios.get(approvedButNotPublished),
-      StrapiMessagesResponseSchema,
-    );
+    const messages = await this.getMessages({
+      id: messageId,
+      approved: true,
+      published: false,
+    });
 
-    return response.length > 0;
+    return messages.length > 0;
   }
 
   /**
@@ -123,7 +185,7 @@ export class StrapiService {
     this.logger.verbose(patch);
 
     const token = strapiToken || (await this.login());
-    const specifiedMessage = this.getApi(`/messages/${messageId}`);
+    const specifiedMessage = StrapiService.getApi(`/messages/${messageId}`);
 
     return this.axiosUtilService.responseParser(
       async () =>
@@ -146,7 +208,7 @@ export class StrapiService {
     this.logger.verbose("Deleting message...");
 
     const token = strapiToken || (await this.login());
-    const specifiedMessage = this.getApi(`/messages/${messageId}`);
+    const specifiedMessage = StrapiService.getApi(`/messages/${messageId}`);
 
     return this.axiosUtilService.responseParser(
       async () =>
@@ -161,7 +223,9 @@ export class StrapiService {
   /**
    * Set the message as approved.
    *
+   * @param messageId The message ID
    * @param truthy Should approve it? Default = true.
+   * @param strapiToken Explicitly specify the Strapi token.
    * @see updateMessage
    */
   async setApproved(messageId: number, truthy = true, strapiToken?: string) {
