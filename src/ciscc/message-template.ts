@@ -12,5 +12,5 @@ export const ComplainMessage = ({
     "---",
     "",
     `文章 ID：${id}`,
-    `發表時間：${created_at.toLocaleDateString("zh-TW")}`,
+    `發表時間：${created_at.toLocaleString("zh-TW")}`,
   ].join("\n");
