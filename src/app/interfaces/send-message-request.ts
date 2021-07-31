@@ -1,7 +1,8 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsDefined, IsNotEmpty, IsString } from "class-validator";
 
 export class SendMessageRequest {
-  @IsNotEmpty()
+  @IsDefined()
   @IsString()
+  @IsNotEmpty()
   message!: string;
 }
