@@ -349,7 +349,10 @@ export class DiscordBotService {
           await this.strapiService.setApproved(postId, false);
           await message.reply(`我會拒絕發布這則訊息。#REJECTED #CISCC`);
         } else {
-          await this.sendServiceMessage("這則訊息不在待發布佇列中。");
+          await this.sendServiceMessage(
+            "這則訊息不在待發布佇列中。",
+            message.channel,
+          );
         }
       } catch (e: unknown) {
         await this.sendServiceMessage(
