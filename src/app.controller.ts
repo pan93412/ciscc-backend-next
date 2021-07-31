@@ -27,6 +27,6 @@ export class AppController {
   @Get("/messages")
   async getMessages(@Query() query: GetMessagesQuery, @Ip() ip: string) {
     this.logger.log(`${ip} try to get the messages.`);
-    await this.strapiService.getMessages(query);
+    return this.strapiService.getMessages(query);
   }
 }
