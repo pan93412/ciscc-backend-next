@@ -1,9 +1,9 @@
-import { IsBoolean } from "class-validator";
+import { IsBooleanString } from "class-validator";
 
 export class GetMessagesQuery {
-  @IsBoolean()
+  @IsBooleanString()
   approved!: boolean;
 
-  @IsBoolean()
+  @IsBooleanString()
   published!: boolean;
 }
