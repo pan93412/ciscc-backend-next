@@ -1,7 +1,8 @@
-import { Body, Controller, Ip, Logger, Post } from "@nestjs/common";
+import { Body, Controller, Get, Ip, Logger, Post, Query } from "@nestjs/common";
 import { StrapiService } from "./strapi/strapi.service";
 import { AppService } from "./app.service";
-import { SendMessageRequest } from "./app.interface";
+import { GetMessagesQuery } from "./app/interfaces/get-messages-query";
+import { SendMessageRequest } from "./app/interfaces/send-message-request";
 
 @Controller()
 export class AppController {
@@ -21,5 +22,11 @@ export class AppController {
   async syncMessage(@Ip() ip: string) {
     this.logger.log(`${ip} want to sync the messages in queue.`);
     await this.appService.syncApprovedMessages();
+  }
+
+  @Get("/messages")
+  async getMessages(@Query() query: GetMessagesQuery, @Ip() ip: string) {
+    this.logger.log(`${ip} try to get the messages.`);
+    await this.strapiService.getMessages(query);
   }
 }
