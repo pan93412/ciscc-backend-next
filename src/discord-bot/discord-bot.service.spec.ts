@@ -2,6 +2,7 @@ import type { TestingModule } from "@nestjs/testing";
 import { Test } from "@nestjs/testing";
 import { ConfigModule } from "@nestjs/config";
 import type { Channel } from "discord.js";
+import { StrapiModule } from "../strapi/strapi.module";
 import { DiscordBotService } from "./discord-bot.service";
 import { SERVICE_MESSAGE_PREFIX, TRASH_BIN_EMOJI } from "./utility/consts";
 
@@ -10,7 +11,7 @@ describe("DiscordBotService", () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule.forRoot()],
+      imports: [ConfigModule.forRoot(), StrapiModule],
       providers: [DiscordBotService],
     }).compile();
 
