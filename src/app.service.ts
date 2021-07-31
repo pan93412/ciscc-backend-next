@@ -18,7 +18,7 @@ export class AppService {
     this.logger.log("Start syncing approved messages...");
 
     const unpublishedMessages =
-      await this.strapiService.getApprovedUnpublishedMessage();
+      await this.strapiService.getApprovedUnpublishedMessages();
 
     await Promise.all(
       unpublishedMessages.map(async (message) => {
@@ -26,7 +26,9 @@ export class AppService {
           this.logger.debug(
             `Message #${message.id}: Sending message to Discord`,
           );
-          await this.discordService.sendMessage(ComplainMessage(message));
+          await this.discordService.forwardAnonymousMessage(
+            ComplainMessage(message),
+          );
 
           this.logger.debug(`Message #${message.id}: Marking as 'published'`);
           await this.strapiService.setPublished(message.id);
