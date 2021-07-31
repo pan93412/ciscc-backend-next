@@ -13,15 +13,15 @@ export class AppController {
     private strapiService: StrapiService,
   ) {}
 
-  @Post("/message")
-  async sendMessage(@Body() body: SendMessageRequest, @Ip() ip: string) {
-    return this.strapiService.sendMessage(body.message, ip);
-  }
-
   @Post("/sync/force")
   async syncMessage(@Ip() ip: string) {
     this.logger.log(`${ip} want to sync the messages in queue.`);
     await this.appService.syncApprovedMessages();
+  }
+
+  @Post("/messages")
+  async sendMessage(@Body() body: SendMessageRequest, @Ip() ip: string) {
+    return this.strapiService.sendMessage(body.message, ip);
   }
 
   @Get("/messages")
