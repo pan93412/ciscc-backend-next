@@ -213,6 +213,31 @@ export class DiscordBotService {
   }
 
   /**
+   * Forward the anonymous message.
+   *
+   * @see sendMessage
+   */
+  async forwardAnonymousMessage(
+    message: string,
+    channel?: TextChannel,
+  ): Promise<Message | null> {
+    this.logger.debug("forwardAnonymousMessage: begin!");
+
+    const sentMessage = await this.sendMessage(message, channel);
+    await Promise.all([
+      sentMessage.react("👍"),
+      sentMessage.react("👎"),
+      sentMessage.react("❤️"),
+      sentMessage.react("🤔"),
+      sentMessage.react("😡"),
+      sentMessage.react("❗️️"),
+    ]);
+
+    this.logger.debug("forwardAnonymousMessage: end!");
+    return sentMessage;
+  }
+
+  /**
    * It will be triggered when the bot is ready.
    */
   @OnEvent("ready")
