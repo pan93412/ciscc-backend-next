@@ -230,7 +230,6 @@ export class DiscordBotService {
       sentMessage.react("❤️"),
       sentMessage.react("🤔"),
       sentMessage.react("😡"),
-      sentMessage.react("❗️️"),
     ]);
 
     this.logger.debug("forwardAnonymousMessage: end!");
