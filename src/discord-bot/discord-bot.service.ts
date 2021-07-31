@@ -163,7 +163,7 @@ export class DiscordBotService {
   }
 
   isCommandChannel(channel: Channel): boolean {
-    return channel.id === process.env.DISCORD_APPROVE_RECEIVE_CHANNEL;
+    return channel.id === process.env.DISCORD_COMMAND_CHANNEL;
   }
 
   /**
