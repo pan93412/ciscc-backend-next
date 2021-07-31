@@ -79,9 +79,12 @@ export class DiscordBotService {
     const boundFunc = func.bind(this);
 
     this.registerEvent("message", (message: Message) => {
-      if (message.content.startsWith(prefixedCmd)) {
+      if (
+        message.content.startsWith(prefixedCmd) &&
+        this.isTextChannel(message.channel) &&
+        this.isCommandChannel(message.channel)
+      )
         boundFunc(message);
-      }
     });
   }
 
