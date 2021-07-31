@@ -15,6 +15,9 @@ async function bootstrap() {
       skipUndefinedProperties: true,
     }),
   );
+  app.enableCors({
+    origin: true,
+  });
   await app.listen(3000, "0.0.0.0");
 }
 
