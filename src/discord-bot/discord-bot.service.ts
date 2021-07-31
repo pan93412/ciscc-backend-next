@@ -159,6 +159,10 @@ export class DiscordBotService {
     return channel.type === "text";
   }
 
+  isCommandChannel(channel: Channel): boolean {
+    return channel.id === process.env.DISCORD_APPROVE_RECEIVE_CHANNEL;
+  }
+
   /**
    * Get the text channel that the message should be sent to.
    */
@@ -299,7 +303,8 @@ export class DiscordBotService {
   async approveMessage(message: Message): Promise<void> {
     if (
       !message.content.startsWith(DISCORD_COMMAND_PREFIX) ||
-      !this.isTextChannel(message.channel)
+      !this.isTextChannel(message.channel) ||
+      !this.isCommandChannel(message.channel)
     )
       return;
     this.logger.debug(`approveMessage: triggered by ${message.author.id}`);
@@ -333,7 +338,8 @@ export class DiscordBotService {
   async rejectMessage(message: Message): Promise<void> {
     if (
       !message.content.startsWith(DISCORD_COMMAND_PREFIX) ||
-      !this.isTextChannel(message.channel)
+      !this.isTextChannel(message.channel) ||
+      !this.isCommandChannel(message.channel)
     )
       return;
     this.logger.debug(`rejectMessage: triggered by ${message.author.id}`);
