@@ -7,10 +7,10 @@ export const ComplainMessage = ({
   message,
 }: Infer<typeof StrapiMessagesResponseEntrySchema>) =>
   [
+    `#${id} @ <t:${created_at.getTime()}:F>`,
     "---",
     message,
     "---",
-    "",
-    `文章 ID：${id}`,
-    `發表時間：${created_at.toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })}`,
+    "想匿名說什麼？ → https://ciscc.pan93.tk",
+    "想當訊息審核員？ → https://ciscc.pan93.tk/review",
   ].join("\n");
