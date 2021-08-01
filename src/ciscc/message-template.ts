@@ -7,7 +7,7 @@ export const ComplainMessage = ({
   message,
 }: Infer<typeof StrapiMessagesResponseEntrySchema>) =>
   [
-    `#${id} @ <t:${created_at.getTime()}:F>`,
+    `#${id} @ <t:${Math.floor(created_at.getTime() / 1000)}:F>`,
     "---",
     message,
     "---",
