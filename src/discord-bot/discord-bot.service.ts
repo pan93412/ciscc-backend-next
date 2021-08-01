@@ -231,13 +231,11 @@ export class DiscordBotService {
     this.logger.debug("forwardAnonymousMessage: begin!");
 
     const sentMessage = await this.sendMessage(message, channel);
-    await Promise.all([
-      sentMessage.react("👍"),
-      sentMessage.react("👎"),
-      sentMessage.react("❤️"),
-      sentMessage.react("🤔"),
-      sentMessage.react("😡"),
-    ]);
+    await Promise.all(
+      ["👍", "👎", "❤️", "😂", "🤔", "😡", "😄", "🧐", "😅"].map((emoji) =>
+        sentMessage.react(emoji),
+      ),
+    );
 
     this.logger.debug("forwardAnonymousMessage: end!");
     return sentMessage;
