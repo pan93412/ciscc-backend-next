@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import type { Channel, TextChannel, ClientEvents } from "discord.js";
-import { Message, Client, MessageReaction } from "discord.js";
+import type { TextChannel, ClientEvents, TextBasedChannels } from "discord.js";
+import { Message, Client, MessageReaction, Intents } from "discord.js";
 import { StrapiService } from "../strapi/strapi.service";
 import { OnCommand, OnEvent } from "./utility/metadata-decorator";
 import { MetadataKeys } from "./utility/metadata-keys";
@@ -16,9 +16,11 @@ import { InvalidChannelException } from "./exceptions/invalid-channel.exception"
 
 @Injectable()
 export class DiscordBotService {
-  private client = new Client();
+  private client = new Client({
+    intents: [Intents.FLAGS.GUILD_MESSAGES],
+  });
 
-  private static messageChannel: Channel | null = null;
+  private static messageChannel: TextBasedChannels | null = null;
 
   private readonly logger = new Logger(DiscordBotService.name);
 
@@ -45,7 +47,7 @@ export class DiscordBotService {
   }
 
   /**
-   * It will run in the destroy stage. Don't trigger it manually!
+   * It will run in to destroy stage. Don't trigger it manually!
    */
   async onModuleDestroy(): Promise<void> {
     this.client.destroy();
@@ -54,7 +56,7 @@ export class DiscordBotService {
   /**
    * Register the specified event to the Discord bot.
    *
-   * @param event the event naame
+   * @param event the event name
    * @param func the event listener
    * @private
    */
@@ -137,7 +139,7 @@ export class DiscordBotService {
   /**
    * Get the message channel that the message should be sent to.
    */
-  async getMessageChannel(): Promise<Channel | null> {
+  async getMessageChannel(): Promise<TextBasedChannels | null> {
     if (!DiscordBotService.messageChannel) {
       const defaultChannel = process.env.DISCORD_DEFAULT_CHANNEL;
       if (!defaultChannel) {
@@ -147,9 +149,11 @@ export class DiscordBotService {
         return null;
       }
 
-      DiscordBotService.messageChannel = await this.client.channels.fetch(
-        defaultChannel,
-      );
+      const channel = await this.client.channels.fetch(defaultChannel);
+
+      if (channel?.isText()) {
+        DiscordBotService.messageChannel = channel;
+      }
     }
 
     return DiscordBotService.messageChannel;
@@ -158,11 +162,11 @@ export class DiscordBotService {
   /**
    * Check if the specified Channel is a text channel.
    */
-  isTextChannel(channel: Channel): channel is TextChannel {
-    return channel.type === "text";
+  isTextChannel(channel: TextBasedChannels): channel is TextChannel {
+    return channel.type === "GUILD_TEXT";
   }
 
-  isCommandChannel(channel: Channel): boolean {
+  isCommandChannel(channel: TextBasedChannels): boolean {
     return channel.id === process.env.DISCORD_COMMAND_CHANNEL;
   }
 
@@ -267,10 +271,10 @@ export class DiscordBotService {
       // More than 2 of people have given the same reaction
       reaction.count >= 2 &&
       // The message of the reacted message is from this bot
-      reaction.message.author.equals(me) &&
+      reaction.message.author?.equals(me) &&
       // Is the message the service message?
       // (Prevent the normal message to be maliciously removed)
-      reaction.message.content.match(SERVICE_MESSAGE_MATCHER)
+      reaction.message.content?.match(SERVICE_MESSAGE_MATCHER)
     ) {
       this.logger.verbose(`recycleMessage: removing: ${reaction.message.id}`);
       await reaction.message.delete();
