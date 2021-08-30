@@ -3,9 +3,7 @@ name: Build cross-platform docker image
 on:
   push:
     branches:
-      - 'enhanced'
-    paths-ignore:
-      - '**.md'
+      - 'master'
 
   release:
     types: [published]
