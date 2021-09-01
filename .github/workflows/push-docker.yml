@@ -13,7 +13,7 @@ on:
 
 env:
   platforms: linux/amd64,linux/arm64
-  image: pan93412/ciscc-docker
+  image: pan93412/ciscc-backend
   develop_tag: latest
   released_tag: release
 
