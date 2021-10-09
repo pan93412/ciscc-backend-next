@@ -11,6 +11,6 @@ export const ComplainMessage = ({
     "---",
     message,
     "---",
-    "想匿名說什麼？ → https://ciscc.pan93.tk",
-    "想當訊息審核員？ → https://ciscc.pan93.tk/review",
+    "想匿名說什麼？ → https://ciscc.pan93.com",
+    "想當訊息審核員？ → https://ciscc.pan93.com/review",
   ].join("\n");
